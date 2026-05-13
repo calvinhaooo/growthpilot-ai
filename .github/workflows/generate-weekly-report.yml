@@ -1,0 +1,39 @@
+name: Generate AI Weekly Growth Report
+
+on:
+  repository_dispatch:
+    types: [generate_weekly_report]
+  workflow_dispatch:
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Generate AI weekly growth report
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          BQ_ANALYTICS_DATASET: ${{ secrets.BQ_ANALYTICS_DATASET }}
+          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: uv run python scripts/03_generate_ai_growth_report.py
+
+      - name: Upload generated reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-growth-report
+          path: |
+            outputs/weekly_growth_report_ai.md
+            outputs/weekly_growth_report_ai.pdf
